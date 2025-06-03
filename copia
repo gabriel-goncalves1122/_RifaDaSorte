@@ -1,0 +1,155 @@
+  // Criar organizadores
+  const [organizador1, organizador2] = await Promise.all([
+    prisma.organizador.create({
+      data: {
+        cnpj: organizadoresData[0].cnpj.replace(/\D/g, ''),
+        userId: usuarios[0].id,
+      },
+    }),
+    prisma.organizador.create({
+      data: {
+        cnpj: organizadoresData[1].cnpj.replace(/\D/g, ''),
+        userId: usuarios[1].id,
+      },
+    }),
+  ]);
+
+  // Criar participantes
+  const participantes = await Promise.all(
+    usuarios.slice(2).map(usuario => 
+      prisma.participante.create({ 
+        data: { userId: usuario.id } 
+      })
+    )
+  );
+
+  // Criar prêmios
+  const premios = [
+    {
+      nome: "iPhone 15 Pro",
+      descricao: "Novo iPhone 15 Pro 256GB",
+      imagem: "https://example.com/iphone.jpg"
+    },
+    {
+      nome: "PlayStation 5",
+      descricao: "Console PS5 com 1 controle",
+      imagem: "https://example.com/ps5.jpg"
+    }
+  ];
+
+  // Criar rifas
+  const rifas = await Promise.all([
+    prisma.rifa.create({
+      data: {
+        titulo: "Rifa do iPhone",
+        descricao: "Concorra a um iPhone 15 Pro",
+        precoBilhete: 10.50,
+        quantidadeBilhetes: 50,
+        dataSorteio: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 dias no futuro
+        status: prisma.StatusRifa.Ativa,
+        organizadorId: organizador1.id,
+        premio: {
+          create: premios[0]
+        }
+      },
+      include: { premio: true }
+    }),
+    prisma.rifa.create({
+      data: {
+        titulo: "Rifa do PlayStation",
+        descricao: "Concorra a um PS5",
+        precoBilhete: 15.00,
+        quantidadeBilhetes: 50,
+        dataSorteio: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000), // 45 dias no futuro
+        status: prisma.StatusRifa.Ativa,
+        organizadorId: organizador2.id,
+        premio: {
+          create: premios[1]
+        }
+      },
+      include: { premio: true }
+    }),
+  ]);
+
+  // Criar bilhetes e vendas
+  for (const rifa of rifas) {
+    // Criar bilhetes disponíveis
+    const bilhetesDisponiveis = Array.from({ length: rifa.quantidadeBilhetes }, (_, i) => ({
+      numero: i + 1,
+      status: prisma.StatusBil.Disponivel,
+      rifaId: rifa.id,
+      createdAt: new Date(),
+    }));
+
+    await prisma.bilhete.createMany({ data: bilhetesDisponiveis });
+
+    // Cada participante compra 10 bilhetes de cada rifa
+    for (const participante of participantes) {
+      const bilhetesParaComprar = await prisma.bilhete.findMany({
+        where: {
+          rifaId: rifa.id,
+          status: prisma.StatusBil.Disponivel
+        },
+        take: 10,
+        orderBy: { id: 'asc' }
+      });
+
+     await Promise.all(
+  bilhetesParaComprar.map((bilhete: { id: number }) => 
+    prisma.bilhete.update({
+      where: { id: bilhete.id },
+      data: {
+        status: prisma.StatusBil.VENDIDO, // Certifique-se que o enum está importado corretamente
+        participanteId: participante.id,
+        pagamento: {
+          create: {
+            valor: rifa.precoBilhete,
+            status: prisma.StatusPag.APROVADO,
+            metodo: prisma.MetodoPag.PIX,
+            participanteId: participante.id,
+            dataProcessamento: new Date()
+          }
+        }
+      }
+    })
+  )
+);
+    }
+  }
+
+  await prisma.logAuditoria.createMany({
+    data: [
+      {
+        acao: "Rifa criada",
+        detalhes: "Rifa do iPhone foi criada com sucesso",
+        rifaId: rifas[0].id
+      },
+      {
+        acao: "Rifa criada",
+        detalhes: "Rifa do PlayStation foi criada com sucesso",
+        rifaId: rifas[1].id
+      }
+    ]
+  });
+
+  await prisma.notificacao.createMany({
+    data: participantes.flatMap(participante => [
+      {
+        mensagem: "Você comprou bilhetes para a Rifa do iPhone!",
+        tipo: "COMPRA",
+        destinatarioId: participante.userId
+      },
+      {
+        mensagem: "Você comprou bilhetes para a Rifa do PlayStation!",
+        tipo: "COMPRA",
+        destinatarioId: participante.userId
+      }
+    ])
+  });
+
+  //console.log("✅ Seed concluído com sucesso!");
+  //console.log(`- Organizadores: ${organizadoresData.map(o => o.razaoSocial).join(', ')}`);
+  //console.log(`- Participantes: ${participantes.length} cadastrados`);
+  //console.log(`- Rifas criadas: ${rifas.map(r => r.titulo).join(', ')}`);
+  //console.log(`- Bilhetes vendidos: ${participantes.length * 20} no total (10 por rifa)`);
+}
