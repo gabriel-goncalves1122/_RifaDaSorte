@@ -12,7 +12,6 @@ const router = Router();
 //router.post('/usuarios', usuarioController.criar);
 
 
-router.use(authMiddleware);
 router.get('/:id', usuarioController.obterPorId);
 router.get('/', usuarioController.listar);
 //router.put('/usuarios/:id', usuarioController.atualizar);

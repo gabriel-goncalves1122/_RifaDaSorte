@@ -55,46 +55,18 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rotas de Documentação (públicas)
-app.get('auth', authRoutes);
-app.get('usuarios', usuarioRoutes);
+// Rotas públicas
+app.use('/rifas', rifaRoutes);
 
-
-
-// Rotas protegidas (documentação)
-app.get('/participantes', authMiddleware, participanteRoutes);
-app.get('/rifas', authMiddleware, rifaRoutes);
-app.get('/bilhetes', authMiddleware, bilheteRoutes);
+// Rotas protegidas
+app.use('/participantes', authMiddleware, participanteRoutes);
+app.use('/bilhetes', authMiddleware, bilheteRoutes);
+app.use('/auth', authRoutes);
+app.use('/usuarios', usuarioRoutes);
 
 
 
 
-/*app.get('/api', (req, res) => {
-  res.json({
-    endpoints: {
-      auth: {
-        login: 'POST /api/auth/login'
-      },
-      usuarios: {
-        criar: 'POST /api/usuarios',
-        obter: 'GET /api/usuarios/:id'
-      },
-      participantes: {
-        listar: 'GET /api/participantes',
-        detalhes: 'GET /api/participantes/:id'
-      },
-      rifas: {
-        listar: 'GET /api/rifas',
-        criar: 'POST /api/rifas',
-        detalhes: 'GET /api/rifas/:id'
-      },
-      bilhetes: {
-        comprar: 'POST /api/bilhetes',
-        detalhes: 'GET /api/bilhetes/:id'
-      }
-    }
-  });
-});*/
 
 // Inicialização do servidor
 async function startServer() {
@@ -103,38 +75,7 @@ async function startServer() {
     console.log('✅ Banco de dados conectado');
 
    app.listen(PORT, () => {
-  /*console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  console.log('\n🟢 Rotas públicas:');
-  console.log(`- POST /api/auth/login`.padEnd(35) + 'Autenticação de usuário');
-  console.log(`- POST /api/usuarios`.padEnd(35) + 'Cadastro de novo usuário');
-  
-  console.log('\n🔐 Rotas protegidas (requer autenticação):');
-  console.log('\n👤 Usuários:');
-  console.log(`- GET /api/usuarios/:id`.padEnd(35) + 'Obter usuário por ID');
-  
-  console.log('\n🎟️ Participantes:');
-  console.log(`- GET /api/participantes`.padEnd(35) + 'Listar participantes');
-  console.log(`- GET /api/participantes/:id`.padEnd(35) + 'Obter participante por ID');
-  console.log(`- GET /api/participantes/:id/bilhetes`.padEnd(35) + 'Listar bilhetes do participante');
-  
-  console.log('\n🎪 Rifas:');
-  console.log(`- GET /api/rifas`.padEnd(35) + 'Listar todas as rifas');
-  console.log(`- POST /api/rifas`.padEnd(35) + 'Criar nova rifa');
-  console.log(`- GET /api/rifas/:id`.padEnd(35) + 'Obter rifa por ID');
-  console.log(`- PUT /api/rifas/:id`.padEnd(35) + 'Atualizar rifa');
-  console.log(`- DELETE /api/rifas/:id`.padEnd(35) + 'Remover rifa');
-  console.log(`- GET /api/rifas/:id/bilhetes`.padEnd(35) + 'Listar bilhetes da rifa');
-  console.log(`- POST /api/rifas/:id/sortear`.padEnd(35) + 'Sortear vencedor da rifa');
-  
-  console.log('\n🎫 Bilhetes:');
-  console.log(`- GET /api/bilhetes`.padEnd(35) + 'Listar todos os bilhetes');
-  console.log(`- POST /api/bilhetes`.padEnd(35) + 'Comprar bilhete');
-  console.log(`- GET /api/bilhetes/:id`.padEnd(35) + 'Obter bilhete por ID');
-  
-  console.log('\n📚 Documentação completa:');
-  console.log(`- GET /api`.padEnd(35) + 'Listar todos os endpoints');
-  console.log(`- GET /api/health`.padEnd(35) + 'Verificar status do servidor\n');*/
-
+ 
   console.log(`Server running on port ${PORT}`);
 });
 

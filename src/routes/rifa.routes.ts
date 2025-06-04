@@ -15,6 +15,5 @@ router.use(authMiddleware);
 router.post('/', controller.criar);
 router.put('/:id', controller.atualizar);
 router.delete('/:id', controller.remover);
-//router.post('/:id/sortear', controller.sortear);
 
 export default router;

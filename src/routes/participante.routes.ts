@@ -8,8 +8,7 @@ const controller = new ParticipanteController();
 // Rotas públicas
 //router.post('/', controller.criar); // Criação pode ser pública
 
-// Rotas protegidas
-router.use(authMiddleware);
+
 router.get('/', controller.listar);
 router.get('/:id', controller.obterPorId);
 router.get('/:id/bilhetes', controller.listarBilhetes);
